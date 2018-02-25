@@ -1,4 +1,4 @@
-FROM ubuntu:xenial
+FROM ubuntu:xenial as builder
 
 MAINTAINER matthewcmead@gmail.com
 
@@ -70,6 +70,33 @@ RUN mkdir /data/default_config
 
 COPY default_config/ /data/default_config
 COPY entrypoint.sh /data
+
+FROM ubuntu:xenial as runner
+
+MAINTAINER matthewcmead@gmail.com
+
+RUN apt-get update -y \
+&&  apt-get upgrade -y \
+&&  apt-get install -y \
+      vim \
+      sudo \
+      wget \
+      perl \
+&&  apt-get install -y \
+      language-pack-en-base \
+      software-properties-common \
+      python-software-properties \
+&&  apt-get clean \
+&&  rm -rf /var/lib/apt/lists/*
+
+RUN mkdir /data \
+&&  useradd -d /data -s /bin/bash --uid 1000 minecraft \
+&&  chown -R minecraft:minecraft /data
+
+USER minecraft
+WORKDIR /data
+
+COPY --from=builder /data /data
 
 VOLUME /data/worlds
 VOLUME /data/config
